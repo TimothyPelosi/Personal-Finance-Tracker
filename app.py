@@ -81,6 +81,32 @@ def upload_csv():
             return redirect(url_for('index'))
     return render_template('upload.html')
 
+@app.route('/edit/<int:id>', methods=['GET', 'POST'])
+def edit_expense(id):
+    conn = sqlite3.connect('expenses.db')
+    cur = conn.cursor()
+
+    if request.method == 'POST':
+        date = request.form['date']
+        description = request.form['description']
+        category = request.form['category']
+        price = request.form['price']
+        
+        cur.execute("""
+            UPDATE expenses 
+            SET Date = ?, Description = ?, Category = ?, Price = ? 
+            WHERE id = ?
+        """, (date, description, category, price, id))
+        
+        conn.commit()
+        conn.close()
+        return redirect(url_for('view_summary'))
+
+    cur.execute("SELECT * FROM expenses WHERE id = ?", (id,))
+    expense = cur.fetchone()
+    conn.close()
+    return render_template('edit.html', expense=expense)
+
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
