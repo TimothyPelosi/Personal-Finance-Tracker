@@ -35,17 +35,31 @@ def add_expense():
     
     return render_template('add.html')
 
-@app.route('/summary')
+@app.route('/summary', methods=['GET', 'POST'])
 def view_summary():
     conn = sqlite3.connect('expenses.db')
     cur = conn.cursor()
-    cur.execute("SELECT * FROM expenses")
-    expenses = cur.fetchall()
-    cur.execute("SELECT SUM(Price) FROM expenses")
-    total_expense = cur.fetchone()[0]
+
+    if request.method == 'POST':
+        month = request.form['month']
+        year = request.form['year']
+        cur.execute("SELECT * FROM expenses WHERE strftime('%m', Date) = ? AND strftime('%Y', Date) = ?", (month, year))
+        expenses = cur.fetchall()
+        cur.execute("SELECT SUM(Price) FROM expenses WHERE strftime('%m', Date) = ? AND strftime('%Y', Date) = ?", (month, year))
+        total_expense = cur.fetchone()[0]
+    else:
+        cur.execute("SELECT * FROM expenses")
+        expenses = cur.fetchall()
+        cur.execute("SELECT SUM(Price) FROM expenses")
+        total_expense = cur.fetchone()[0]
+
     conn.close()
     
     return render_template('summary.html', expenses=expenses, total=total_expense)
+
+@app.route('/search')
+def search():
+    return render_template('search.html')
 
 if __name__ == '__main__':
     init_db()
