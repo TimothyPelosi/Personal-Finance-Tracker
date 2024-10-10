@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, redirect, url_for
 import sqlite3
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -60,6 +61,25 @@ def view_summary():
 @app.route('/search')
 def search():
     return render_template('search.html')
+
+@app.route('/upload', methods=['GET', 'POST'])
+def upload_csv():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file:
+            df = pd.read_csv(file, skiprows=5)
+            conn = sqlite3.connect('expenses.db')
+            cur = conn.cursor()
+            for index, row in df.iterrows():
+                date = row['Date']
+                description = row['Description']
+                amount = row['Amount']
+                cur.execute("INSERT INTO expenses (Date, Description, Category, Price) VALUES (?, ?, ?, ?)",
+                            (date, description, 'Imported', amount))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('index'))
+    return render_template('upload.html')
 
 if __name__ == '__main__':
     init_db()
