@@ -12,7 +12,7 @@ while True:
     choice = int(input())
 
     if choice == 1:
-        datetime = input("Enter the date of the expense (YYYY-MM-DD): ")
+        date = input("Enter the date of the expense (YYYY-MM-DD): ")
         description = input("Enter the description of the expense: ")
 
         cur.execute("SELECT DISTINCT category FROM expenses")
@@ -37,7 +37,30 @@ while True:
         conn.commit()
         
     elif choice == 2:
-        pass
+        print("Select an option: ")
+        print("1. View all expenses")
+        print("2. View monthly expenses by category")
+        view_choice = int(input())
+        if view_choice == 1:
+            cur.execute("SELECT * FROM expenses")
+            expenses = cur.fetchall()
+            for expense in expenses:
+                print(expense)
+        elif view_choice == 2:
+            month = input("Enter the month (MM): ")
+            year = input("Enter the year (YYYY): ")
+            cur.execute("SELECT category, SUM(price) FROM expenses WHERE strftime('%m', Date) = ? AND strftime('%Y', Date) = ? GROUP BY category", (month, year))
+            expenses = cur.fetchall()
+            for expense in expenses:
+                print(f"Category: {expense[0]}, Total: {expense[1]}")
+        else:
+            exit()
 
     else:
         exit()
+    
+    repeat = input("Would you like to continue? (y/n) \n")
+    if repeat.lower() != "y":
+        break
+
+conn.close()
